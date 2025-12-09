@@ -1,0 +1,73 @@
+
+
+
+
+
+
+
+
+
+
+
+
+/* убираем стандартные отступы */
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.band{
+	display: grid;
+	grid-template-columns: 1fr min(100%, 800px) 1fr;
+	min-height: 100vh;
+	background: #7a7878;
+
+	background-color: var(--background-band-color);
+}
+
+.main{
+
+
+	grid-column: 2;            /* строго в центре */
+	background: white;
+	padding:  17px 17px 0 17px;                /* отступы в центре */
+    
+
+        position: relative;  /* чтобы меню абсолютное было относительно .main */
+
+	background-color: var(--background-color);
+	color: var(--text-color);
+}
+
+.menu {
+    position: absolute;  /* относительно родителя */
+    padding: 0;
+        margin: 0;           /* убираем возможные внешние отступы */
+    padding: 0;     
+    bottom: 0;
+    left: 0;
+    width: 100%;         /* растянуть на ширину .main */
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 равные колонки */
+    place-items: center;
+    background-color: var(--btn-bg);
+    color: var(--text-color);
+ 
+
+}
+
+/* если внутри кнопки тоже нужно управлять цветом */
+.menu button {
+
+
+
+    background-color: var(--btn-bg);    /* фон кнопки из переменной темы */
+    color: var(--btn-text);             /* текст кнопки из переменной темы */
+    border: 1px solid var(--btn-border); 
+    padding: 0px;
+    border:none
+
+}
+
+
+

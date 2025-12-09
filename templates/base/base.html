@@ -1,0 +1,77 @@
+
+
+
+
+
+
+
+
+
+
+{{ define "base" }}
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/img/alivse.png" type="image/png">
+  <link rel="stylesheet" href="/static/css/logo.css">
+  <link rel="stylesheet" href="/static/css/theme.css">
+  <link rel="stylesheet" href="/static/css/menu.css">
+
+  <title>alivse</title>
+</head>
+
+<body theme="{{ .Theme }}">
+
+  <div class="band">
+
+    <div class="main">
+
+    {{ block "logo" . }}{{ end }} 
+
+     <div class="content" id="content">
+      
+       <div>
+        
+        <p>див 1</p>
+
+       </div>
+
+       <div>
+
+           <p>див 2</p>
+
+       </div > 
+
+                   <button hx-get="/auth" hx-target="#content" hx-swap="innerHTML" >
+    auth
+             </button>
+
+     </div>
+
+
+
+       <div class="menu"> 
+
+           {{ block "menu" . }}{{ end }} 
+       </div > 
+       
+
+
+    </div>
+
+    
+   </div>
+
+  </div>
+
+  <script src="https://unpkg.com/htmx.org@1.9.3"></script>
+
+</body>
+
+</html>
+
+{{ end }}

@@ -1,0 +1,29 @@
+
+
+
+
+
+
+
+
+
+
+{{ define "auth" }}
+
+<p>Напишите вашу почту, отправим вам пароль для входа.</p>
+
+<!-- Поле для ввода почты, добавим id для удобства -->
+<input type="text" id="email" name="email" placeholder="Введите вашу почту">
+
+<!-- Кнопка, которая отправляет почту на сервер через GET (или лучше POST) -->
+<button 
+    hx-post="/get-password"         
+    hx-target="#content" 
+    hx-swap="innerHTML"
+    hx-include="#email">      <!-- включаем значение поля email в запрос -->
+    Получить пароль
+</button>
+
+<button hx-get="/" hx-target="body" hx-swap="innerHTML">Back</button>
+
+{{ end }}
