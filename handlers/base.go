@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"auth/middleware"
 	"html/template"
 	"log"
 
@@ -12,21 +13,41 @@ import (
 func BaseHandler(tmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		// --- определяем тему из cookie ---
+		// --- тема ---
 		theme := "light"
 		if c, err := r.Cookie("theme"); err == nil && c.Value == "dark" {
 			theme = "dark"
 		}
+		log.Println("[BaseHandler] Тема страницы:", theme)
 
-		// --- формируем данные для шаблона ---
+		// --- получаем юзера из контекста ---
+		user := middleware.GetUserFromContext(r)
+		if user != nil {
+			log.Printf("[BaseHandler] Пользователь найден: ID=%s, Name=%s, Role=%s",
+				user.UserID, user.Name, user.Role)
+		} else {
+			log.Println("[BaseHandler] Пользователь не найден в контексте (гость)")
+		}
+
+		name := ""
+		role := ""
+
+		if user != nil {
+			name = user.Name
+			role = user.Role
+		}
+
 		data := struct {
 			Theme string
 			Name  string
+			Role  string
 		}{
 			Theme: theme,
+			Name:  name,
+			Role:  role,
 		}
 
-		// --- рендерим шаблон ---
+		// --- рендер шаблона ---
 		if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 			log.Printf("[BaseHandler] ❌ Ошибка шаблона: %v", err)
 			http.Error(w, "Ошибка отображения страницы", http.StatusInternalServerError)

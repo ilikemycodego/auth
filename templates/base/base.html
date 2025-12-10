@@ -8,6 +8,11 @@
 
 
 
+
+
+
+
+
 {{ define "base" }}
 
 <!DOCTYPE html>
@@ -27,45 +32,44 @@
 <body theme="{{ .Theme }}">
 
   <div class="band">
-
     <div class="main">
 
-    {{ block "logo" . }}{{ end }} 
+      {{ block "logo" . }}{{ end }} 
 
-     <div class="content" id="content">
-      
-       <div>
-        
-        <p>див 1</p>
+      <!-- Контент: видим только если пользователь не залогинен -->
+      {{if not .Name}}
+      <div class="content" id="content">
+        <div>
+          <p>див 1</p>
+        </div>
 
-       </div>
+        <div>
+          <p>див 2</p>
+        </div> 
 
-       <div>
+        <div> 
+          <p>Запуск двигателя межзвёздной ракеты Hagac</p>
+          <button hx-get="/auth" hx-target="#content" hx-swap="innerHTML">
+            auth
+          </button>
+        </div> 
+      </div>
+      {{end}}
 
-           <p>див 2</p>
+      <!-- Приветствие и меню: видим только если пользователь залогинен -->
+      {{if .Name}}
+        <div class="greeting">
+          <p>Привет, {{.Name}}!</p>
+        </div>
 
-       </div > 
+        <div class="content" id="content"></div>
 
-                   <button hx-get="/auth" hx-target="#content" hx-swap="innerHTML" >
-    auth
-             </button>
-
-     </div>
-
-
-
-       <div class="menu"> 
-
-           {{ block "menu" . }}{{ end }} 
-       </div > 
-       
-
+        <div class="menu"> 
+          {{ block "menu" . }}{{ end }} 
+        </div>
+      {{end}}
 
     </div>
-
-    
-   </div>
-
   </div>
 
   <script src="https://unpkg.com/htmx.org@1.9.3"></script>

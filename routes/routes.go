@@ -3,6 +3,7 @@ package routes
 import (
 	"auth/auth"
 	"auth/handlers"
+	"auth/middleware"
 
 	"auth/proxy"
 
@@ -17,7 +18,7 @@ func RegisterRoutes(m *mux.Router, tmpl *template.Template) {
 	// 🛰️ Подключаем все прокси
 	proxy.AdProxy(m)
 
-	m.HandleFunc("/", handlers.BaseHandler(tmpl))
+	m.Handle("/", middleware.UserContextMiddleware(handlers.BaseHandler(tmpl)))
 
 	m.HandleFunc("/theme", handlers.ToggleThemeHandler)
 
