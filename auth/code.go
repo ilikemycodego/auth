@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Проверка одноразового кода
 func verifyCode(email, code string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -33,7 +34,7 @@ func verifyCode(email, code string) (bool, error) {
 		return false, nil
 	}
 
-	// отмечаем код как использованный
+	// помечаем код как использованный
 	_, err = db.DB.Exec(ctx, `
 		UPDATE auth_codes SET used = true
 		WHERE email = $1 AND code = $2
@@ -42,9 +43,7 @@ func verifyCode(email, code string) (bool, error) {
 	return true, err
 }
 
-//---------------
-
-// Создаём 30-дневную сессию
+// Создание сессии на 7 дней
 func createSession(userID string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -64,41 +63,40 @@ func createSession(userID string) (string, error) {
 	return sessionID, nil
 }
 
-// Если юзера нет — создаём amigo с ролью boss
-func getOrCreateUser(email string) (string, string, error) {
+// Поиск или создание нового пользователя (без роли)
+func getOrCreateUser(email string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var id, role string
+	var id string
 
-	// Проверяем, есть ли такой юзер
+	// Ищем пользователя
 	err := db.DB.QueryRow(ctx,
-		"SELECT id, role FROM users WHERE email=$1 LIMIT 1",
+		"SELECT id FROM users WHERE email=$1 LIMIT 1",
 		email,
-	).Scan(&id, &role)
+	).Scan(&id)
 
-	// Если нашли — возвращаем
+	// Если найден — возвращаем
 	if err == nil {
-		return id, role, nil
+		return id, nil
 	}
 
-	// Создаём нового
+	// Создаём нового пользователя amigo
 	newID := uuid.New().String()
-	role = "boss" // роль для нового пользователя
 
 	_, err = db.DB.Exec(ctx, `
-		INSERT INTO users (id, email, name, role)
-		VALUES ($1, $2, 'amigo', $3)
-	`, newID, email, role)
+		INSERT INTO users (id, email, name)
+		VALUES ($1, $2, 'amigo')
+	`, newID, email)
 
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	return newID, role, nil
+	return newID, nil
 }
 
-// Проверяет код и создаёт полноценную сессию
+// Верификация кода + создание пользователя + создание сессии
 func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -112,7 +110,7 @@ func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 
 		ok, err := verifyCode(email, code)
 		if err != nil {
-			log.Println("[VerifyCodeHandler] ❌ Ошибка проверки кода:", err)
+			log.Println("[VerifyCodeHandler] Ошибка проверки кода:", err)
 			fmt.Fprint(w, "Ошибка сервера")
 			return
 		}
@@ -122,10 +120,10 @@ func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 			return
 		}
 
-		// 1️⃣ Создаём или ищем юзера
-		userID, userRole, err := getOrCreateUser(email)
+		// 1️⃣ Создаём или ищем пользователя
+		userID, err := getOrCreateUser(email)
 		if err != nil {
-			log.Println("[VerifyCodeHandler] ❌ Ошибка getOrCreateUser:", err)
+			log.Println("[VerifyCodeHandler] Ошибка getOrCreateUser:", err)
 			fmt.Fprint(w, "Ошибка сервера")
 			return
 		}
@@ -133,20 +131,20 @@ func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 		// 2️⃣ Создаём сессию
 		sessionID, err := createSession(userID)
 		if err != nil {
-			log.Println("[VerifyCodeHandler] ❌ Ошибка createSession:", err)
+			log.Println("[VerifyCodeHandler] Ошибка createSession:", err)
 			fmt.Fprint(w, "Ошибка сервера")
 			return
 		}
 
-		// 3️⃣ Генерируем JWT с sessionID и ролью из БД
-		token, err := token.GenerateJWT(sessionID, userRole, token.ExpirationTime())
+		// 3️⃣ Генерируем JWT только с sessionID
+		token, err := token.GenerateJWT(sessionID, token.ExpirationTime())
 		if err != nil {
-			log.Println("[VerifyCodeHandler] ❌ Ошибка GenerateJWT:", err)
+			log.Println("[VerifyCodeHandler] Ошибка GenerateJWT:", err)
 			fmt.Fprint(w, "Ошибка сервера")
 			return
 		}
 
-		// 4️⃣ Устанавливаем HttpOnly cookie с токеном
+		// 4️⃣ Устанавливаем cookie
 		http.SetCookie(w, &http.Cookie{
 			Name:     "auth",
 			Value:    token,
@@ -155,9 +153,9 @@ func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 			MaxAge:   7 * 24 * 3600,
 		})
 
-		log.Println("[VerifyCodeHandler] ✅ JWT создан и cookie установлено")
+		log.Println("[VerifyCodeHandler] JWT создан и cookie установлено")
 
-		// 5️⃣ HTMX редирект на главную
+		// 5️⃣ HTMX редирект
 		w.Header().Set("HX-Redirect", "/")
 		fmt.Fprint(w, "OK")
 	}

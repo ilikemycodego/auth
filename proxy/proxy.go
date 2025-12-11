@@ -10,21 +10,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func AdProxy(r *mux.Router) {
-	adAddr := os.Getenv("AD_URL")
-	if adAddr == "" {
-		adAddr = "http://localhost:8083"
+func ControlProxy(r *mux.Router) {
+	controlAddr := os.Getenv("CONTROL_URL")
+	if controlAddr == "" {
+		controlAddr = "http://localhost:8083"
 	}
 
-	adURL, err := url.Parse(adAddr)
+	controlURL, err := url.Parse(controlAddr)
 	if err != nil {
-		log.Println("Неверный адрес ad:", err)
+		log.Println("Неверный адрес control:", err)
 		return
 	}
 
-	proxy := httputil.NewSingleHostReverseProxy(adURL)
+	proxy := httputil.NewSingleHostReverseProxy(controlURL)
 
-	r.PathPrefix("/ad").Handler(http.StripPrefix("/ad", proxy))
+	r.PathPrefix("/control").Handler(http.StripPrefix("/control", proxy))
 
-	log.Println("Проксируем /ad →", adAddr)
+	log.Println("Проксируем /control →", controlAddr)
 }

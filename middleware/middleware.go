@@ -13,7 +13,6 @@ import (
 type UserContext struct {
 	UserID string
 	Name   string
-	Role   string
 }
 
 type ctxKey string
@@ -48,7 +47,7 @@ func UserContextMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		log.Println("[Middleware] JWT успешно распарсен, SessionID:", claims.SessionID, "Role:", claims.Role)
+		log.Println("[Middleware] JWT успешно распарсен, SessionID:", claims.SessionID)
 
 		// --- ищем сессию ---
 		session, err := db.GetSession(claims.SessionID)
@@ -66,13 +65,12 @@ func UserContextMiddleware(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
-		log.Printf("[Middleware] Пользователь найден: ID=%s, Name=%s, Role=%s", user.ID, user.Name, user.Role)
+		log.Printf("[Middleware] Пользователь найден: ID=%s, Name=%s", user.ID, user.Name)
 
 		// --- кладём пользователя в контекст ---
 		uc := &UserContext{
 			UserID: user.ID,
 			Name:   user.Name,
-			Role:   user.Role,
 		}
 		ctx := context.WithValue(r.Context(), UserKey, uc)
 

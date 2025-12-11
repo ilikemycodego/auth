@@ -16,7 +16,7 @@ import (
 func RegisterRoutes(m *mux.Router, tmpl *template.Template) {
 
 	// 🛰️ Подключаем все прокси
-	proxy.AdProxy(m)
+	proxy.ControlProxy(m)
 
 	m.Handle("/", middleware.UserContextMiddleware(handlers.BaseHandler(tmpl)))
 

@@ -23,28 +23,25 @@ func BaseHandler(tmpl *template.Template) http.HandlerFunc {
 		// --- получаем юзера из контекста ---
 		user := middleware.GetUserFromContext(r)
 		if user != nil {
-			log.Printf("[BaseHandler] Пользователь найден: ID=%s, Name=%s, Role=%s",
-				user.UserID, user.Name, user.Role)
+			log.Printf("[BaseHandler] Пользователь найден: ID=%s, Name=%s",
+				user.UserID, user.Name)
 		} else {
 			log.Println("[BaseHandler] Пользователь не найден в контексте (гость)")
 		}
 
 		name := ""
-		role := ""
 
 		if user != nil {
 			name = user.Name
-			role = user.Role
+
 		}
 
 		data := struct {
 			Theme string
 			Name  string
-			Role  string
 		}{
 			Theme: theme,
 			Name:  name,
-			Role:  role,
 		}
 
 		// --- рендер шаблона ---

@@ -49,17 +49,16 @@ func ExpirationTime() time.Time {
 // Claims — структура данных, хранимая внутри токена
 type Claims struct {
 	SessionID string `json:"session_id"`
-	Role      string `json:"role"`
+
 	jwt.RegisteredClaims
 }
 
-// GenerateJWT — создаёт новый токен по sessionID и роли
-func GenerateJWT(sessionID, role string, expiration time.Time) (string, error) {
+// GenerateJWT — создаёт новый токен по sessionID
+func GenerateJWT(sessionID string, expiration time.Time) (string, error) {
 	once.Do(loadSecret)
 
 	claims := &Claims{
-		SessionID: sessionID,
-		Role:      role,
+		SessionID: sessionID, // добавляем сюда
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiration),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
