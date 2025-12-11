@@ -9,10 +9,17 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/mailersend/mailersend-go"
 )
+
+type EmailData struct {
+	Email  string
+	Status string
+	Valid  bool
+}
 
 // Генерация случайного 6-значного кода
 func init() {
@@ -73,7 +80,42 @@ func sendCode(email, code string) error {
 	return nil
 }
 
-//------------------------------------------------
+// ------------------------------------------------
+// --- валидатор email ---
+func validateEmail(email string) (bool, string) {
+	if email == "" {
+		return false, "⚠️ email пустой"
+	}
+
+	// простая проверка формата
+	re := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	if !re.MatchString(email) {
+		return false, "⚠️ некорректный email"
+	}
+
+	return true, "✅ email валиден"
+}
+
+// --- обработчик проверки email через htmx ---
+func CheckEmailHandler(tmpl *template.Template) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		email := r.FormValue("email")
+		valid, status := validateEmail(email)
+
+		data := EmailData{
+			Email:  email,
+			Status: status,
+			Valid:  valid,
+		}
+
+		if err := tmpl.ExecuteTemplate(w, "status_email", data); err != nil {
+			http.Error(w, "Ошибка шаблона", http.StatusInternalServerError)
+			return
+		}
+	}
+}
+
+//-------------------------
 
 func AuthHandler(tmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -88,6 +130,7 @@ func AuthHandler(tmpl *template.Template) http.HandlerFunc {
 		log.Println("[BAuthHandler] ✅ страница отрендерена")
 	}
 }
+
 func GetPasswordHandler(tmpl *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 

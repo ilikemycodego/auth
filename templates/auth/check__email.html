@@ -1,0 +1,22 @@
+
+
+
+
+
+
+
+
+{{ define "status_email" }}
+<!-- контейнер для статуса -->
+<div id="status_email">{{.Status}}</div>
+
+<!-- кнопка -->
+<button 
+    hx-post="/get-password"         
+    hx-target="#content" 
+    hx-swap="innerHTML"
+    hx-include="#email"
+    {{if not .Valid}}disabled{{end}}>
+    Получить пароль
+</button>
+{{ end }}

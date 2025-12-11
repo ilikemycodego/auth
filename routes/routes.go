@@ -29,5 +29,6 @@ func RegisterRoutes(m *mux.Router, tmpl *template.Template) {
 	m.HandleFunc("/get-password", auth.GetPasswordHandler(tmpl))
 
 	m.HandleFunc("/verify-code", auth.VerifyCodeHandler(tmpl))
+	m.HandleFunc("/status-email", auth.CheckEmailHandler(tmpl))
 
 }

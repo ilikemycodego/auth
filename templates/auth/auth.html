@@ -7,40 +7,27 @@
 
 
 
-
 {{ define "auth" }}
 
 <p>Напишите вашу почту, отправим вам пароль для старта.</p>
 
-<!-- Поле для ввода почты, добавим id для удобства -->
-<input type="text" id="email" name="email" placeholder="Введите вашу почту">
+<input type="text" id="email" name="email" placeholder="Введите вашу почту"
+       hx-post="/status-email"
+       hx-trigger="keyup changed delay:300ms"
+       hx-target="#status_email"
+       hx-swap="innerHTML">
 
+<!-- сюда htmx подставит статус и кнопку -->
+<div id="status_email">
+    <span></span>br
+    <button disabled>Получить пароль</button>
+</div>
 
 <p>Пожалуйста подтвердите каманду на запуск ракеты hagac</p>
 
-
-<label>
-  <input type="checkbox" name="subscribe" value="1">
-  Вызвать такси
-</label><br>
-<label>
-  <input type="checkbox" name="subscribe" value="2">
-  Подтвердить запуск двигателя
-</label><br>
-<label>
-  <input type="checkbox" name="subscribe" value="3">
-  Заварить кофе
-</label><br>
-
-
-<!-- Кнопка, которая отправляет почту на сервер через GET (или лучше POST) -->
-<button 
-    hx-post="/get-password"         
-    hx-target="#content" 
-    hx-swap="innerHTML"
-    hx-include="#email">      <!-- включаем значение поля email в запрос -->
-    Получить пароль
-</button><br>
+<label><input type="checkbox" name="subscribe" value="1"> Вызвать такси</label><br>
+<label><input type="checkbox" name="subscribe" value="2"> Подтвердить запуск двигателя</label><br>
+<label><input type="checkbox" name="subscribe" value="3"> Заварить кофе</label><br>
 
 <button hx-get="/" hx-target="body" hx-swap="innerHTML">Back</button>
 

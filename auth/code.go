@@ -50,7 +50,7 @@ func createSession(userID string) (string, error) {
 	defer cancel()
 
 	sessionID := uuid.New().String()
-	expires := time.Now().Add(30 * 24 * time.Hour)
+	expires := time.Now().Add(7 * 24 * time.Hour)
 
 	_, err := db.DB.Exec(ctx, `
 		INSERT INTO sessions (id, user_id, expires_at)
@@ -64,37 +64,38 @@ func createSession(userID string) (string, error) {
 	return sessionID, nil
 }
 
-// Если юзера нет — создаём amigo
-func getOrCreateUser(email string) (string, error) {
+// Если юзера нет — создаём amigo с ролью boss
+func getOrCreateUser(email string) (string, string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	var id string
+	var id, role string
 
 	// Проверяем, есть ли такой юзер
 	err := db.DB.QueryRow(ctx,
-		"SELECT id FROM users WHERE email=$1 LIMIT 1",
+		"SELECT id, role FROM users WHERE email=$1 LIMIT 1",
 		email,
-	).Scan(&id)
+	).Scan(&id, &role)
 
 	// Если нашли — возвращаем
 	if err == nil {
-		return id, nil
+		return id, role, nil
 	}
 
 	// Создаём нового
 	newID := uuid.New().String()
+	role = "boss" // роль для нового пользователя
 
 	_, err = db.DB.Exec(ctx, `
 		INSERT INTO users (id, email, name, role)
-		VALUES ($1, $2, 'amigo', 'user')
-	`, newID, email)
+		VALUES ($1, $2, 'amigo', $3)
+	`, newID, email, role)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return newID, nil
+	return newID, role, nil
 }
 
 // Проверяет код и создаёт полноценную сессию
@@ -122,7 +123,7 @@ func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 		}
 
 		// 1️⃣ Создаём или ищем юзера
-		userID, err := getOrCreateUser(email)
+		userID, userRole, err := getOrCreateUser(email)
 		if err != nil {
 			log.Println("[VerifyCodeHandler] ❌ Ошибка getOrCreateUser:", err)
 			fmt.Fprint(w, "Ошибка сервера")
@@ -137,8 +138,7 @@ func VerifyCodeHandler(tmpl *template.Template) http.HandlerFunc {
 			return
 		}
 
-		// 3️⃣ Генерируем JWT с sessionID и ролью
-		userRole := "user" // можно брать из БД, если нужно
+		// 3️⃣ Генерируем JWT с sessionID и ролью из БД
 		token, err := token.GenerateJWT(sessionID, userRole, token.ExpirationTime())
 		if err != nil {
 			log.Println("[VerifyCodeHandler] ❌ Ошибка GenerateJWT:", err)
